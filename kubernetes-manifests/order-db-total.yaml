@@ -40,7 +40,7 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:9.5
+        image: harbor-repo.vmware.com/dockerhub-proxy-cache/library/postgres:9.5
         imagePullPolicy: "Always"
         ports:
         - containerPort: 5432
