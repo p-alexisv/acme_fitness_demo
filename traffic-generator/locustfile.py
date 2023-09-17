@@ -1,9 +1,11 @@
 # This program will generate traffic for ACME Fitness Shop App. It simulates both Authenticated and Guest user scenarios. You can run this program either from Command line or from
-# the web based UI. Refer to the "locust" documentation for further information. 
+# the web based UI. Refer to the "locust" documentation for further information.
 from time import sleep
 from locust import HttpUser, task, SequentialTaskSet, between
+from random import randint
 import random
 import logging
+import jwt
 
 # List of users (pre-loaded into ACME Fitness shop)
 users = ["eric", "phoebe", "dwight", "han", "elaine", "walter"]
@@ -70,10 +72,10 @@ class UserBrowsing(SequentialTaskSet):
 # AuthUserBrowsing simulates traffic for Authenticated Users (Logged in)
 class AuthUserBrowsing(UserBrowsing):
     """
-    AuthUserBrowsing extends the base UserBrowsing class as an authenticated user 
+    AuthUserBrowsing extends the base UserBrowsing class as an authenticated user
     interacting with the cart and making orders
     """
-    Order_Info = { "userid":"8888",
+    Order_Info = { "userid":"650267d4216ab38a2741b6d7",
                 "firstname":"Eric",
                 "lastname": "Cartman",
                 "address":{
@@ -83,19 +85,19 @@ class AuthUserBrowsing(UserBrowsing):
                     "state": "CA",
                     "country":"USA"},
                 "email":"jblaze@marvel.com",
-                "delivery":"UPS/FEDEX",
+                "delivery":"FEDEX",
                 "card":{
-                    "type":"amex/visa/mastercard/bahubali",
-                    "number":"349834797981", 
+                    "type":"visa",
+                    "number":"3498347979814323",
                     "expMonth":"12",
-                    "expYear": "2022",
+                    "expYear": "2029",
                     "ccv":"123"
                 },
                 "cart":[
-                    {"id":"1234", "description":"redpants", "quantity":"1", "price":"4"},
-                    {"id":"5678", "description":"bluepants", "quantity":"1", "price":"4"}
+                    {"itemid":"65026794a6d1d6ba5b90278d", "name":"redpants", "quantity":"1", "price":"101.25","shortDescription":"Test add to cart"},
+                    {"itemid":"65026794a6d1d6ba5b90278e", "name":"bluepants", "quantity":"1", "price":"42.00","shortDescription":"Test add to cart"}
                 ],
-                "total":"100"}
+                "total":"143.25"}
 
     def on_start(self):
         self.login()
@@ -115,7 +117,21 @@ class AuthUserBrowsing(UserBrowsing):
         response = self.client.post("/login/", json={"username": user, "password":"vmware1!"})
         if response.ok:
             body = response.json()
-            self.user.userid = body["token"]
+            #self.user.userid = body["token"]
+            #self.user.userid = body["access_token"]
+            accesstoken = body["access_token"]
+            decoded_data = jwt.decode(accesstoken, 'secret', verify=False, algorithms=["HS256"])
+            #print("token: %s" % accesstoken)
+            #decodedtoken = self.decode_user(accesstoken)
+            self.user.userid = decoded_data["sub"]
+            response2 = self.client.get("/users/" + self.user.userid)
+            userdetails = response2.json()["data"]
+            self.user.firstname = userdetails["firstname"]
+            self.user.lastname = userdetails["lastname"]
+            self.user.email = userdetails["email"]
+            self.user.username = userdetails["username"]
+
+
     @task(2)
     def addToCart(self):
         """Randomly adds 1 or 2 of a random product to the cart"""
@@ -145,7 +161,43 @@ class AuthUserBrowsing(UserBrowsing):
             logging.warning("Not logged in, skipping 'Add to Checkout'")
             return
         userCart = self.client.get("/cart/items/" + self.user.userid).json()
-        order = self.client.post("/order/add/"+ self.user.userid, json=self.Order_Info)
+        cartitems = userCart["cart"]
+        total = 0
+        for item in cartitems:
+            total = total + item["price"]
+        #print(userCart)
+        deliverychoices = ["FEDEX", "UPS", "DHL"]
+        r_delivery = random.choice(deliverychoices)
+        cctypechoices = ["AMEX", "VISA", "MASTERCARD"]
+        r_cctype = random.choice(cctypechoices)
+        cc = ''
+        for i in range(16):
+            cc = cc + str(randint(0,9))
+        ccmo = str(randint(1,12))
+        ccyr = str(randint(2025,2035))
+        ccv = str(randint(100,999))
+        This_Order_Info = { "userid":self.user.userid,
+                "firstname":self.user.firstname,
+                "lastname":self.user.lastname,
+                "address":{
+                    "street":"20 Riding Lane Av",
+                    "city":"San Francisco",
+                    "zip":"10201",
+                    "state": "CA",
+                    "country":"USA"},
+                "email":self.user.email,
+                "delivery":r_delivery,
+                "card":{
+                    "type":r_cctype,
+                    "number":cc,
+                    "expMonth":ccmo,
+                    "expYear":ccyr,
+                    "ccv":ccv
+                },
+                "cart":cartitems,
+                "total":total }
+        #print(This_Order_Info)
+        order = self.client.post("/order/add/"+ self.user.userid, json=This_Order_Info)
 class UserBehavior(SequentialTaskSet):
     tasks = [AuthUserBrowsing, UserBrowsing]
 class WebSiteUser(HttpUser):
