@@ -34,7 +34,7 @@ spec:
     spec:
       containers:
         - name: users-redis
-          image: bitnami/redis
+          image: harbor-repo.vmware.com/dockerhub-proxy-cache/bitnami/redis
           imagePullPolicy: Always
           resources:
             requests:
