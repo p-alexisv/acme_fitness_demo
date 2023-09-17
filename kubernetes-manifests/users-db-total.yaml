@@ -35,7 +35,7 @@ spec:
     spec:
       containers:
         - name: users-mongo
-          image: mongo:4
+          image: harbor-repo.vmware.com/dockerhub-proxy-cache/library/mongo:4
           resources:
             {}
           ports:
