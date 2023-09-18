@@ -45,13 +45,13 @@ spec:
         - name: FRONTEND_PORT
           value: '3000'
         - name: USERS_HOST
-          value: 'users'
+          value: 'users.labs.acme'
         - name: CATALOG_HOST
-          value: 'catalog'
+          value: 'catalog.labs.acme'
         - name: ORDER_HOST
-          value: 'order'
+          value: 'order.labs.acme'
         - name: CART_HOST
-          value: 'cart'
+          value: 'cart.labs.acme'
         - name: USERS_PORT
           value: '8083'
         - name: CATALOG_PORT
