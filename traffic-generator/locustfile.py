@@ -120,7 +120,8 @@ class AuthUserBrowsing(UserBrowsing):
             #self.user.userid = body["token"]
             #self.user.userid = body["access_token"]
             accesstoken = body["access_token"]
-            decoded_data = jwt.decode(accesstoken, 'secret', verify=False, algorithms=["HS256"])
+            jwt_options = { 'verify_signature': False }
+            decoded_data = jwt.decode(accesstoken, 'secret', verify=False, algorithms=["HS256"],options=jwt_options)
             #print("token: %s" % accesstoken)
             #decodedtoken = self.decode_user(accesstoken)
             self.user.userid = decoded_data["sub"]
